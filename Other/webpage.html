@@ -1,0 +1,175 @@
+1. Get all values to live update clock
+2. Get all values to show current value as default
+3. Reset Settings button
+4. Add all locations
+5. Location drop down has a search box
+
+
+
+
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+    <title>Page Title</title>
+  </head>
+  <body style='background-color: #EEEEEE;'>
+    <span style='color: #002466;'>
+      <h1>Smart Clock Configurator</h1>
+      <h2>Alarms</h2>
+      <div>
+        <h3>Morning Alarm</h3>
+        <div>
+          <label for="time">Time:</label>
+          <input type="time" id="time" name="time" step="1">
+        </div>
+        <div>
+          <label for="theme_id">Fade up time:</label>
+          <select id="theme_id" name="theme_id">
+            <option value="1">1 min</option>
+            <option value="2">2 min</option>
+            <option value="5">5 min</option>
+            <option value="10">10 min</option>
+            <option value="15">15 min</option>
+            <option value="20">20 min</option>
+            <option value="30">30 min</option>
+          </select>
+        </div>
+        <h3>Other Alarms</h3>
+        <div>
+          <label for="time">Time:</label>
+          <input type="time" id="time" name="time" step="1">
+        </div>
+        <div>
+          <label for="time">Time:</label>
+          <input type="time" id="time" name="time" step="1">
+        </div>
+        <div>
+          <label for="time">Time:</label>
+          <input type="time" id="time" name="time" step="1">
+        </div>
+        <div>
+          <label for="time">Time:</label>
+          <input type="time" id="time" name="time" step="1">
+        </div>
+        <div>
+          <label for="time">Time:</label>
+          <input type="time" id="time" name="time" step="1">
+        </div>
+        <h2>Customization</h2>
+        <h3>Auto Dimming</h3>
+        <div>
+          <label for="theme_id">Enable Auto Dimming:</label>
+          <input type="checkbox" id="vehicle1" name="vehicle1" value="Bike">
+        </div>
+        <div class="slidecontainer">
+          <label for="red_channel">Auto Dimming Ambient Light Threshold:</label>
+          <input type="range" min="0" max="255" value="100" class="slider" id="redChannel">
+        </div>
+      </div>
+      <div class="slidecontainer">
+        <label for="red_channel">Auto Dimming Light Brightness:</label>
+        <input type="range" min="0" max="255" value="100" class="slider" id="redChannel">
+      </div>
+      <h3>Minimal Mode</h3>
+      <div>
+        <label for="theme_id">Minimal Clock:</label>
+        <input type="checkbox" id="vehicle1" name="vehicle1" value="Bike">
+      </div>
+      <div>
+        <label for="theme_id">Minimal Clock When Ambient:</label>
+        <input type="checkbox" id="vehicle1" name="vehicle1" value="Bike">
+      </div>
+      <h3>Colors and Brightness</h3>
+      <div class="slidecontainer">
+        <label for="red_channel">Red Channel:</label>
+        <input type="range" min="0" max="255" value="100" class="slider" id="redChannel">
+      </div>
+      <div class="slidecontainer">
+        <label for="green_channel">Green Channel:</label>
+        <input type="range" min="0" max="255" value="100" class="slider" id="greenChannel">
+      </div>
+      <div class="slidecontainer">
+        <label for="blue_channel">Blue Channel:</label>
+        <input type="range" min="0" max="255" value="100" class="slider" id="blueChannel">
+      </div>
+      <div class="slidecontainer">
+        <label for="white_channel">White Channel:</label>
+        <input type="range" min="0" max="255" value="100" class="slider" id="whiteChannel">
+      </div>
+      <div class="slidecontainer">
+        <label for="red_channel">Brightness:</label>
+        <input type="range" min="0" max="255" value="100" class="slider" id="redChannel">
+      </div>
+  </body>
+  </div>
+  <h2>Time Settings</h2>
+  <div>
+    <label for="theme_id">Location (for Timezone and DST):</label>
+    <select id="theme_id" name="theme_id">
+      <option value="GMT0">Africa/Abidjan</option>
+      <option value="GMT0">Africa/Accra</option>
+      <option value="EAT-3">Africa/Addis_Ababa</option>
+      <option value="CET-1">Africa/Algiers</option>
+      <option value="AST4ADT,M3.2.0,M11.1.0">America/Halifax</option>
+      <option value="EST5EDT,M3.2.0,M11.1.0">America/Toronto</option>
+    </select>
+  </div>
+  <form action="/config_time" method="get">
+    <h2>Manual Time Selection</h2>
+    <div>
+      <label for="datetime-local">Time:</label>
+      <input type="datetime-local" id="datetime-local" name="datetime-local" step="1">
+    </div>
+    </div>
+    <div>
+      <label for="mil_time">Show 24-hour clock:</label>
+      <input type="checkbox" id="mil_time" name="mil_time" checked>
+    </div>
+    <br>
+    <input type="submit" value="Submit">
+  </form>
+  <p>Set Timezone: <input type='number' placeholder='timezone' id='set_timezone' />
+  </p>
+  <button type='button' id='btn_update' onclick='passive_angle()'>Update Settings</button>
+  </p>
+  <h2>Other</h2>
+  <div>
+    <label for="ntp_addr">Time Server:</label>
+    <input type="text" id="ntp_addr" name="ntp_addr" value="pool.ntp.org">
+  </div>
+  <div>
+    <script>
+      var Socket;
+      const TimeZone = document.getElementById('set_timezone');
+      const Angle_Btn = document.getElementById('btn_update');
+      let btn_press = false;
+      let delayed = false;
+      const sleep = (milliseconds) => {
+        return new Promise(reslove => setTimeout(reslove, milliseconds))
+      };
+
+      function init() {
+        Socket = new WebSocket('ws://' + window.location.hostname + ':81/');
+        Socket.onmessage = function(event) {
+          processCommand(event);
+        };
+      };
+
+      function processCommand(event) {
+        var obj = JSON.parse(event.data);
+        document.getElementById('angle').innerHTML = obj.angle;
+      };
+
+      function passive_angle() {
+        send_tz();
+        btn_press = btn_press == false;
+      };
+
+      function send_tz() {
+        let msg = {
+            \
+            "type\": \"tz\", \"tz\": TimeZone.value }; btn_press = false; Socket.send(JSON.stringify(msg)); }; window.onload = function(event) { init(); };
+    </script>
+</html>
